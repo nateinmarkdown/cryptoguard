@@ -1,13 +1,15 @@
+import argparse
 import os
 import sys
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives.ciphers import (
-    Cipher, algorithms, modes
-)
+
 
 backend = default_backend()
+
 
 def encrypt_file(key, filename):
     # Check that key is the correct length for AES
@@ -34,6 +36,7 @@ def encrypt_file(key, filename):
     with open(filename + ".encrypted", "wb") as f:
         f.write(iv + ciphertext)
 
+
 def decrypt_file(key, filename):
     # Check that key is the correct length for AES
     if len(key) != 32:
@@ -57,25 +60,26 @@ def decrypt_file(key, filename):
     with open(filename[:-10], "wb") as f:
         f.write(plaintext)
 
+
 def main():
-    # Check that the correct number of arguments have been provided
-    if len(sys.argv) != 4:
-        raise ValueError("Usage: python3 CryptoGuard.py [encrypt/decrypt] [key] [file]")
+    parser = argparse.ArgumentParser(description='Encrypt or decrypt a file using AES CBC mode.')
+    parser.add_argument('command', choices=['encrypt', 'decrypt'], help='Whether to encrypt or decrypt the file.')
+    parser.add_argument('key', help='The encryption key.')
+    parser.add_argument('filename', help='The name of the file to encrypt or decrypt.')
+    args = parser.parse_args()
 
-    # Parse the command line arguments
-    command = sys.argv[1]
-    key = sys.argv[2].encode("utf-8")
-    filename = sys.argv[3]
+    key = args.key.encode("utf-8")
 
-    if command == "encrypt":
-        encrypt_file(key, filename)
-    elif command == "decrypt":
-        decrypt_file(key, filename)
+    if args.command == "encrypt":
+        encrypt_file(key, args.filename)
+    elif args.command == "decrypt":
+        decrypt_file(key, args.filename)
     else:
-        raise ValueError("Usage: python3 CryptoGuard.py [encrypt/decrypt] [key] [file]")
+        parser.print_help()
+
 
 if __name__ == "__main__":
     try:
         main()
-    except ValueError as e:
+    except Exception as e:
         print("Error:", e)
